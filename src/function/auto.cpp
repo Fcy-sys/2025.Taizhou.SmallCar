@@ -165,6 +165,7 @@ void Skill_route()
     wait(1000,msec);
 
     act.Straight(-30, 20, 45);
+
     act.Straight(35, 20, 45);
     act.Rotate(80);
     act.Straight(30, 80, 90, 350);
