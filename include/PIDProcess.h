@@ -1,8 +1,8 @@
 #ifndef PIDPROCESS_H_
 #define PIDPROCESS_H_
 
-const int DefaultMaxTimeMsec = 1500;//最大延时时间
-extern bool task_keep_flag;
+const int DefaultMaxTimeMsec = 3000;//最大延时时间
+extern bool keep_red_flag;
 extern bool task_hook_flag;
 extern bool task_hook_flag2;
 extern bool task_hook_flag3;
@@ -20,7 +20,8 @@ public:
    void Drunk(float target);
 };
 
-void task_keep();
+void task_keep_red();
+void task_keep_blue();
 void task_hook();
 void task_Hook(); 
 void task_claw();

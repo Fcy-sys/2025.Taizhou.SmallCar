@@ -30,8 +30,8 @@ public:
     void Stop_coast();
     void Stop_hold();//停止
     
-    void Move_withfit(float angle);//可以边走边调整车身姿态
-    void Move_withfit2(float angle);//保持当前速度
+    void Move_Curve(float angle);//走曲线用
+    void Move_withfit(float angle);//直线修正
 };
 
 typedef enum

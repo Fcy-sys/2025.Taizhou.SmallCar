@@ -25,7 +25,7 @@ PID pid_pose;                 //姿态控制pid计算器
 PID pid_drunk;                //机械臂二级电机pid计算器
 PID pid;                      //用于调用pid函数
 
-motor Serial = motor(PORT20, ratio18_1, false);               //串口
+motor Serial = motor(PORT9, ratio18_1, false);               //串口
 
 // VEXcode device constructors
 digital_out Catch = digital_out(Brain.ThreeWirePort.C);       //展开

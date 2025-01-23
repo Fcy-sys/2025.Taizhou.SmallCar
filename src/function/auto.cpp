@@ -1,15 +1,27 @@
 #include "_includes.h"
+// #define Competition
 #define REDSIDE
 // #define BLUESIDE
 // #define CALIBRATION_ROTATE
 // #define CALIBRATION_STRAIGHT
 // #define CALIBRATION_DISTANCE
 
-void rotate_pid_test()
+void rotate_test();
+void straight_test();
+void Competition_route();
+void Skill_route();
+void IN()
 {
-    act.Rotate(90, 10);
-    act.Rotate(270, 60);
-    act.Rotate(0, 50);
+    spinning_state = 1;
+    Motor_Collect.spin(forward);
+    Motor_Get.spin(forward);
+}
+
+void OUT()
+{
+    spinning_state = 2;
+    Motor_Collect.spin(reverse);
+    Motor_Get.spin(reverse);
 }
 
 /// @brief 设置陀螺仪角度
@@ -29,11 +41,33 @@ void autonomous_task()
 {   
     auto_init();
     thread debug(Thread_DataAnalyse);
-    thread Filtrate(Thread_FiltrateTask_BLUE);
-    //thread Kasi(Thread_Kasi);
 
-    #ifdef REDSIDE
-    wait(10,msec);
+    #ifdef Competition
+    Competition_route();
+    #endif
+
+    #ifndef Competition
+    Skill_route();
+    #endif
+
+    #ifdef CALIBRATION_ROTATE
+    rotate_test();
+    #endif
+
+    #ifdef CALIBRATION_STRAIGHT
+    straight_test();
+    #endif
+
+    #ifdef CALIBRATION_DISTANCE
+    act.distance(160, 70, 0, 2500);
+    #endif   
+}
+
+void Competition_route()
+{
+    thread Kasi(Thread_Kasi);
+       #ifdef REDSIDE
+    thread Filtrate(Thread_FiltrateTask_BLUE);
 
     //开始钩桩
     task_hook_flag = 1;
@@ -84,14 +118,68 @@ void autonomous_task()
     Motor_Hook.spinTo(-700,deg,false);
     Motor_Get.spin(reverse, 40, pct);   
     #endif
+}
 
-    #ifdef CALIBRATION_ROTATE
-    wait(10,msec);
-    act.Rotate(90, 60 ,1500);
-    #endif
+void Skill_route()
+{
+    IN();                           //开履带
+    keep_red_flag = 1;
+    act.Straight_2(85, 72, -90);    //吃第一个环, keep住
+    act.Straight(-70, 25, -90);     //去夹桩
+    CATCH();                        //夹桩
+    thread Kasi(Thread_Kasi);       //若一开始就打开该线程可能会导致第一个环keep不住
 
-    #ifdef CALIBRATION_STRAIGHT
-    wait(10,msec);
+
+    act.Rotate(0);                  //去吃第二个环
+    IN();                           //开履带
+    act.Straight(60, 60, 0);        //吃中线上的红环
+    act.Straight(-37, 40, 0);       //退回，防止碰到联队桩旁边的两个环
+    act.Rotate(180);                //掉头，准备吃第三个环
+    act.Straight(85, 80, 180);      //直走吃第三个环
+
+    act.Rotate(135);                //转向角落
+    act.Straight(50, 60,135);       //吃角落环
+    act.Rotate(100, 20);            //转一下，防止吃不到
+    act.Straight(30, 80, 90, 350);  //吃掉角落环
+    act.Rotate(-47);                //转角度，准备放桩和下一步的角度
+    CATCH();                        //放桩
+
+    //————————————————————————————————————————————放下第一个桩，过半场————————————————————————————————————————————//
+
+    act.Straight_2(80, 80, 0, 5000);
+    act.Straight(140, 80, 0, 5000);
+    act.Rotate(160);
+    act.Straight_2(-45, 30, 90);
+    CATCH();                        //夹到第二个桩
+
+    act.Rotate(90);
+    act.Straight(55, 40, 90);
+    act.Straight_2(-47, 68, 0);
+    
+    act.Straight(85, 40, 0);
+    act.Rotate(90);
+    act.Straight(65, 90, 90);
+
+    act.Rotate(45);
+    act.Straight(70, 60, 45);
+    wait(1000,msec);
+
+    act.Straight(-30, 20, 45);
+    act.Straight(35, 20, 45);
+    act.Rotate(80);
+    act.Straight(30, 80, 90, 350);
+    act.Rotate(225);
+    CATCH();
+
+
+    wait(2000,sec);
+
+
+    printf("DONE\n");
+}
+
+void straight_test()
+{
     CATCH();
     Ringin();
     wait(100,msec);
@@ -107,102 +195,13 @@ void autonomous_task()
     act.Straight(-20, 40 , 0, 1000);
     act.Straight(30, 40 , 0, 1000);
     act.Straight(-20, 40 , 0, 1000);
-    #endif
-
-    #ifdef CALIBRATION_DISTANCE
-    wait(10,msec);
-    act.distance(160, 70, 0, 2500);
-    #endif
-
-  
-
-#ifdef FILE_RECORD
-    Brain.Timer.reset();
-    chassis.Move_forward(20.0);
-    chassis.Move();
-    printf("%f\n", Brain.Timer.time(seconds));
-    std::ofstream My_file("data.csv", std::ios::out);
-    printf("%d\n", My_file.is_open());
-    if (!My_file.is_open())
-    {
-        std::cout << "Unable to open file";
-        exit(1);
-        while (Brain.Timer.time(seconds) < 10.0)
-        {
-            My_file << static_cast<float>(chassis_distance()) << ","
-                    << static_cast<float>(Brain.Timer.time(seconds)) << "\n";
-            printf("%f\n", Brain.Timer.time(seconds));
-        }
-        // 将数据写入文件;
-        wait(10, msec);
-    }
-    My_file.close();
-    chassis.Move_hold();
-    chassis.Move();
-#endif
-
-#ifdef DEBUG
-    thread debug(Inertial_DataShow);
-    while (1)
-    {
-        TEST_rotate(6.0, 5);
-        wait(3, sec);
-    }
-#endif
-
-    
 }
 
-    //act.Straight_2(-38, 25, 0,1500);    
-    // CATCH();
-    // Ringin();
-    // Motor_Claw.spinTo(100,deg,false);
-    // wait(500,msec);
-    // act.Rotate(-35,30);
-    // act.Straight_2(27, 30, -35,1500);
-
-    // act.Rotate(76,50);
-    // act.Straight(130, 70, 76,2000);
-    // act.Straight_2(35, 35, 76, 1200);
-    // act.Straight_2(-25, 35, 76, 1500);
-
-    // act.Rotate(-45, 40, 1000);
-    // act.Straight(75, 70, -45,1800);
-
-    // Motor_Claw.spinTo(600,deg,false);
-    // Motor_Hook.spinTo(200,deg,false);
-    // act.Rotate(10,40,1300);    
-
-    // hand.set(true);
-    // act.Straight_fast2slow(52, 70, 35,1200);
-    
-    // act.Rotate(135, 40,2000);
-    // hand.set(false);
-    // act.Rotate(0, 40, 1000);
-    // act.Straight_2(30, 40, 0,800);
-    // act.Rotate(45, 20, 800);
-    // wait(800,msec);
-    // act.Straight_2(-20, 50, 35, 800);
-    // act.Straight_2(30, 40, 35,800);
-    // wait(800,msec);
-
-    // act.Rotate(180, 40, 1500);
-    // act.Straight_2(-18, 30, 180,1000);   
-    // Filtrate.interrupt();
-    // Kasi.interrupt();
-
-    // CATCH();
-    // Ringout();
-    // wait(300,msec);
-    // Ringin();
-    // wait(200,msec);
-    // Ringin();
-    // Motor_Claw.spinTo(0,deg,false);
-    // Motor_Hook.spinTo(0,deg,false);
-    // act.Straight(100, 90, 110, 1200);
-    // Ringout();
-
-
+void rotate_test()
+{
+    wait(10,msec);
+    act.Rotate(90, 60 ,1500);
+}
 
 void DebugEnd()
 {

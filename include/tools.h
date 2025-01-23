@@ -1,6 +1,8 @@
 #ifndef TOOLS_H
 #define TOOLS_H
 #include "robot-config.h"
+extern int spinning_state;
+
 int sign(float);
 
 bool Red();                     //OpticalÏà¹Øº¯Êý

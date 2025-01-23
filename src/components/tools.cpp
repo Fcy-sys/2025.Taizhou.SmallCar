@@ -377,12 +377,12 @@ void Thread_Kasi()
             if(Motor_Collect.velocity(pct) < 2)
 
                {
-                    wait(2000, msec);
+                    wait(1000, msec);
                     if(Motor_Collect.velocity(pct) < 2)
                     {Motor_Collect.spin(reverse, 100, pct);
-                    wait(400,msec);
+                    wait(200,msec);
                     Motor_Collect.spin(forward, 100, pct);
-                    wait(400,msec);}
+                    wait(200,msec);}
                 }
         }
         this_thread::sleep_for(10);

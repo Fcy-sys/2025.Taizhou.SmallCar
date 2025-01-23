@@ -6,7 +6,8 @@ using namespace vex;
 MyTimer Timer;
 const float braking_distance = 20.0;
 int count = 0;
-bool task_keep_flag = 0;
+bool keep_red_flag = 0;
+bool keep_blue_flag = 0;
 bool task_hook_flag = 0;
 bool task_hook_flag2 = 0;
 bool task_hook_flag3 = 0;
@@ -32,21 +33,21 @@ void Act::Rotate(float deg, float speed, int MaxTimeMsec) {
     printf("PIDRotate %f\n", deg);
     
     if (false == used) {
-        pid.init(&pid_rotate, 0.6, 0.3, 0.4, speed, 6, 2, 0.8, 0.45);
+        pid.init(&pid_rotate, 0.37, 0.3, 0.4, speed, 6, 3, 0.5, 0.45);
     }
     Timer.reset();
 
     while (true) {
         float delta = pid.PID_Absolute(&pid_rotate, deg, MainData.Statedata.rotation_angle);
-        float degree_to_target = delta * 3;
-        int direction = sign(delta);
-        if(fabs(degree_to_target) > 500)
-        {
-            delta = speed * direction;
-        }
+        // float degree_to_target = delta * 3;
+        // int direction = sign(delta);
+        // if(fabs(degree_to_target) > 500)
+        // {
+        //     delta = speed * direction;
+        // }
         chassis.Move_free(0, delta);
         //std::cout << Inertial.rotation() << std::endl;
-        if (pid_rotate.targetArrived()) {
+        if (pid_rotate.targetArrived() && Motor_BaseL.velocity(pct) < 2) {
             chassis.Stop_brake();
             angle_sensor_init();
             std::cout << Inertial.rotation() <<"    done" << std::endl;
@@ -81,7 +82,6 @@ void Act::Straight(float target, float speed, float target_deg, int MaxTimeMsec)
     
     pid.init(&pid_position, 1.0, 0.1, 20.0, speed, 4, 10, 1, 2);
     Timer.reset();
-    \
     while (true) {
         float distance_to_target = pid.PID_Absolute(&pid_position, target, MainData.Statedata.position_y)* 2;
        
@@ -102,8 +102,7 @@ void Act::Straight(float target, float speed, float target_deg, int MaxTimeMsec)
        
         
          chassis.Move_free(SPEED, 0);
-         //chassis.Move_withfit(target_deg);
-        std::cout<< Chassis_velocity << std::endl;
+         chassis.Move_withfit(target_deg);
         if (pid_position.targetArrived()) {
             chassis.Stop_brake();
             std::cout << MainData.Statedata.position_y<<"   done" << std::endl;
@@ -121,7 +120,12 @@ void Act::Straight(float target, float speed, float target_deg, int MaxTimeMsec)
         chassis.Move();
         task_claw();
         vex::wait(10, msec);
-        Timer.click(); 
+        Timer.click();
+
+        task_keep_red();
+        task_keep_blue();
+        task_hook();
+        task_Hook(); 
     }
 }
 
@@ -155,10 +159,8 @@ void Act::Straight_2(float target, float speed, float target_deg, int MaxTimeMse
             precise = fmin(fabs(pid_position.getOutput()), 5) * sign(pid_position.getOutput());
             SPEED += speedcontrol.speed_up(precise);
         }
-         std::cout<< Chassis_velocity << std::endl;
-         //std::cout << MainData.Statedata.position_y<< std::endl;
          chassis.Move_free(SPEED, 0);
-         chassis.Move_withfit(target_deg);
+         chassis.Move_Curve(target_deg);
 
         if (pid_position.targetArrived()) {
             chassis.Stop_brake();
@@ -178,7 +180,8 @@ void Act::Straight_2(float target, float speed, float target_deg, int MaxTimeMse
         vex::wait(10, msec);
         Timer.click(); 
 
-        task_keep();
+        task_keep_red();
+        task_keep_blue();
         task_hook();
         task_Hook();
     }
@@ -198,8 +201,8 @@ void Act::distance(float target, float speed, float target_deg, int MaxTimeMsec)
     {
         float delta = pid.PID_Absolute(&pid_position, target, Distance.objectDistance(distanceUnits::cm));
         chassis.Move_free(delta,0);
-        if(target_deg == 0) chassis.Move_withfit(MainData.Statedata.rotation_angle);
-        else chassis.Move_withfit(target_deg);
+        if(target_deg == 0) chassis.Move_Curve(MainData.Statedata.rotation_angle);
+        else chassis.Move_Curve(target_deg);
         std::cout<< Distance.objectDistance(distanceUnits::cm) << std::endl;
 
         if (pid_position.targetArrived()) {
@@ -237,14 +240,29 @@ void Act::Drunk(float target)
 
 
 //！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！岷佩哘喘販暦曝！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！//
-void task_keep()
+void task_keep_red()
 {
-    if(task_keep_flag)
+    if(keep_red_flag)
+    {
+        check(1);
+        if(Red())
+        {
+            Motor_Collect.stop();
+            spinning_state = 0;
+            keep_red_flag = 0;
+        }
+    }
+}
+
+void task_keep_blue()
+{
+    if(keep_blue_flag)
     {
         if(Blue())
         {
             Motor_Collect.stop();
-            task_keep_flag = 0;
+            spinning_state = 0;
+            keep_blue_flag = 0;
         }
     }
 }

@@ -110,22 +110,23 @@ void Chassis::Stop_coast()
 /// @brief 附带有路线修正的底盘运动函数，可用于直线修正，或走出贴墙曲线（曲线每次走的不一样）   
 /// @param 方向，目标角度
 //相较以前版本加入了速度环，希望可以实现调节转向的快慢，未测试
-void Chassis::Move_withfit(float angle)
+void Chassis::Move_Curve(float angle)
 {
     double hope = 0;
     double fit_value = 0;                                                                                            // 修正值
-    pid.init(&pid_pose, 0.5, 0.2, 1, 70, 3, 1, 1, 0.5);
+    pid.init(&pid_pose, 0.5, 0.2, 1, 70, 3, 1);
     hope = pid.PID_Absolute(&pid_pose, angle, Inertial.rotation(rotationUnits::deg));                           //计算修正值
     fit_value = hope;//+= speedcontrol.adjust(hope);
     Motor_speed[0] += fit_value;
     Motor_speed[1] -= fit_value;
 }
 
-void Chassis::Move_withfit2(float angle)
+
+void Chassis::Move_withfit(float angle)
 {
     double hope = 0;
     double fit_value = 0;                                                                                            // 修正值
-    pid.init(&pid_pose, 0.5, 0.2, 0.6, 70, 3, 1, 1, 0.5);
+    pid.init(&pid_pose, 0.05, 0.2, 0.6, 4, 3, 0.5);
     hope = pid.PID_Absolute(&pid_pose, angle, Inertial.rotation(rotationUnits::deg));                           //计算修正值
     fit_value = hope;//+= speedcontrol.adjust(hope);
     Motor_speed[0] += fit_value;

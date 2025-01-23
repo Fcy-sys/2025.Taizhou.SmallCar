@@ -35,7 +35,7 @@ int main()
     // std::cout << "Drunk = " << Drunk_rotation.position(deg) << std::endl; //输出当前角度信息
     // check(Motor_Claw.position(deg));
     // check(Optical.isNearObject());
-    Serial_Send( MainData.Statedata.position_y);
+    Serial_Send(MainData.Statedata.position_y, Chassis_velocity, 0, 0);
 
     wait(100, msec);
   }
